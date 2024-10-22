@@ -104,12 +104,12 @@ This is a Discord bot designed to encourage team member satisfaction, communicat
 ```
 pip install discord.py sqlite3 apscheduler py-cord
 ```
-4. Create an environmental file (.env) with your Discord bot API, such as:
+3. Create an environmental file (.env) with your Discord bot API, such as:
 ```
 # .env
 DISCORD_TOKEN=
 ```
-4. Replace the two variables inside of bot.py with your channel ID and your admin member ID.
+4. Modify the config.py file to toggle on/off either the Kudos or Gold Star Discord commands as well as define the two variables required for your channel ID and your admin member ID.
 5. Create a system service that starts/restarts the bot automatically (modify directory paths or user as necessary):
 ```
 [Unit]
@@ -126,7 +126,7 @@ EnvironmentFile=/home/admin/git/discord-bot-appreciation/.env
 [Install]
 WantedBy=multi-user.target
 ```
-5. Enable and start the bot:
+6. Enable and start the bot:
 ```
 systemctl enable discord-appreciation-bot.service
 systemctl start discord-appreciation-bot.service
