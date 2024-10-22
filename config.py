@@ -1,11 +1,11 @@
 
+
+# Discord user ID(s) that are allowed to use restricted commands such as resetting kudos allocations and starting/closing polls
+ALLOWED_USERS = [693530583715938306]
+
 ####### KUDOS CONFIGS ###########
 
 ENABLE_KUDOS = True
-
-# Discord user ID(s) that are allowed to use restricted commands such as resetting kudos allocations
-ALLOWED_USERS = [693530583715938306]
-
 
 ####### GOLD STAR CONFIGS #######
 

@@ -16,7 +16,8 @@ async def start_poll_task():
     poll_status = cursor.fetchone()
 
     # Load the poll into a specified channel
-    channel = bot.get_channel(CHANNEL)
+    channel = bot.get_channel(config.CHANNEL)  # Get the channel object
+
 
     if channel is None:
         print(f"Error: Could not find channel.")
@@ -50,7 +51,7 @@ async def start_poll_task():
 # Command to start poll manually
 @bot.slash_command(name="start_poll", description="Start an anonymous Gold Star poll")
 async def start_poll(ctx: discord.ApplicationContext):
-    if ctx.author.id not in ALLOWED_USERS:
+    if ctx.author.id not in config.ALLOWED_USERS:
         await ctx.respond("You do not have permission to use this command.", ephemeral=True)
         return
 

@@ -126,7 +126,7 @@ async def my_allocations(ctx: discord.ApplicationContext):
 @bot.slash_command(name="reset_kudos", description="Reset kudos allocations for everyone")
 async def reset_kudos(ctx: discord.ApplicationContext):
 
-    if ctx.author.id not in ALLOWED_USERS:
+    if ctx.author.id not in config.ALLOWED_USERS:
         await ctx.respond("You do not have permission to use this command.", ephemeral=True)
         return
 
