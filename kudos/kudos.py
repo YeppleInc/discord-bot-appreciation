@@ -109,16 +109,39 @@ async def view_kudos(ctx: discord.ApplicationContext):
 async def my_allocations(ctx: discord.ApplicationContext):
     conn = sqlite3.connect('kudos/kudos.db')
     cursor = conn.cursor()
+    
+    # Check remaining kudos allowance
     cursor.execute("SELECT remaining FROM kudos_allocations WHERE user_id = ?", (ctx.author.id,))
     remaining_allowance = cursor.fetchone()
 
+    # Prepare the response for remaining allowance
     if remaining_allowance:
-        await ctx.respond(f"You have ${remaining_allowance[0]} left to give.", ephemeral=True)
+        allowance_message = f"You have ${remaining_allowance[0]} left to give."
     else:
         # If not found, insert a new entry for the user with 100 allocations
         cursor.execute("INSERT INTO kudos_allocations (user_id, remaining) VALUES (?, 100)", (ctx.author.id,))
         conn.commit()
-        await ctx.respond("You have $100 left to give.", ephemeral=True)
+        allowance_message = "You have $100 left to give."
+
+    # Retrieve summary of kudos given by this user
+    cursor.execute("""
+        SELECT received_id, SUM(amount) 
+        FROM kudos 
+        WHERE user_id = ? 
+        GROUP BY received_id
+    """, (ctx.author.id,))
+    kudos_given = cursor.fetchall()
+
+    # Format the summary of kudos given
+    if kudos_given:
+        summary_message = "Kudos you've given:\n" + "\n".join(
+            f"• <@{received_id}>: ${total_amount}" for received_id, total_amount in kudos_given
+        )
+    else:
+        summary_message = "You haven't given any kudos yet."
+
+    # Combine both messages and send the response
+    await ctx.respond(f"{allowance_message}\n\n{summary_message}", ephemeral=True)
 
     conn.close()
 
