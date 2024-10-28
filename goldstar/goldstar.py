@@ -5,6 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import discord
 from bot_instance import bot  # Import the bot instance from the separate file
 import config
+import random
 
 # Command to start an anonymous Gold Star poll
 async def start_poll_task():
@@ -164,6 +165,7 @@ async def close_poll(ctx: discord.ApplicationContext):
     # Get all comments submitted
     cursor.execute("SELECT comment FROM votes WHERE week = ?", (week,))
     comments = cursor.fetchall()
+    random.shuffle(comments)
     comments_list = "\n".join(f"• {comment[0]}" for comment in comments) or "No comments submitted."
 
     if vote_counts:
