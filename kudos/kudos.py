@@ -48,7 +48,6 @@ async def kudos(ctx: discord.ApplicationContext, user: discord.Member, amount: i
 # Command to view kudos received by users
 @bot.slash_command(name="view_kudos", description="View kudos received")
 async def view_kudos(ctx: discord.ApplicationContext):
-
     conn = sqlite3.connect('kudos/kudos.db')
     cursor = conn.cursor()
 
@@ -56,14 +55,15 @@ async def view_kudos(ctx: discord.ApplicationContext):
     cursor.execute("SELECT received_id, SUM(amount) AS total_amount FROM kudos GROUP BY received_id")
     results = cursor.fetchall()
 
-    # Create an embed to display the kudos received
-    embed = discord.Embed(title="Kudos Received", color=discord.Color.blue())
-
-    total_kudos_summary = ""  # String to accumulate the summary of total kudos per user
-
     def split_long_message(message, limit=1024):
         """Splits a message into chunks of the specified character limit."""
-        return [message[i:i+limit] for i in range(0, len(message), limit)]
+        return [message[i:i + limit] for i in range(0, len(message), limit)]
+
+    # List to store embeds
+    embeds = []
+
+    current_embed = discord.Embed(title="Kudos Received", color=discord.Color.blue())
+    current_size = len(current_embed.title)  # Start with the size of the title
 
     for user_id, total_amount in results:
         # Get the messages sent to this user
@@ -76,33 +76,36 @@ async def view_kudos(ctx: discord.ApplicationContext):
         # Fetch the user object using the user ID
         user = await bot.fetch_user(user_id)
 
-        # Combine the user name and total amount, making sure it fits within the character limit
+        # Create the field content
         base_message = f"${total_amount}\nMessages:\n"
+        total_content = base_message + message_list
 
-        # Ensure that we split the total content of the field within the limit of 1024 characters
-        if len(base_message) + len(message_list) > 1024:
-            message_chunks = split_long_message(message_list, 1024 - len(base_message))  # Adjust split limit
-            for idx, chunk in enumerate(message_chunks):
-                field_name = f"{user.name} (Part {idx + 1})" if len(message_chunks) > 1 else user.name
-                embed.add_field(name=field_name, value=base_message + chunk, inline=False)
+        # If adding this field exceeds the 6000-character limit, create a new embed
+        if current_size + len(total_content) > 6000:
+            embeds.append(current_embed)
+            current_embed = discord.Embed(title="Kudos Received (Continued)", color=discord.Color.blue())
+            current_size = len(current_embed.title)
+
+        # If a single field content exceeds 1024 characters, split it
+        if len(total_content) > 1024:
+            chunks = split_long_message(message_list, 1024 - len(base_message))
+            for idx, chunk in enumerate(chunks):
+                field_name = f"{user.name} (Part {idx + 1})" if len(chunks) > 1 else user.name
+                current_embed.add_field(name=field_name, value=base_message + chunk, inline=False)
+                current_size += len(field_name) + len(base_message) + len(chunk)
         else:
-            # If it's small enough, add as one field
-            embed.add_field(name=user.name, value=base_message + message_list, inline=False)
+            current_embed.add_field(name=user.name, value=total_content, inline=False)
+            current_size += len(user.name) + len(total_content)
 
-        # Add to the total summary string
-        total_kudos_summary += f"{user.name}: ${total_amount}\n"
+    # Append the last embed
+    embeds.append(current_embed)
 
-    # Ensure total_kudos_summary does not exceed 1024 characters
-    if len(total_kudos_summary) > 1024:
-        summary_chunks = split_long_message(total_kudos_summary)
-        for idx, chunk in enumerate(summary_chunks):
-            field_name = f"Total Kudos Summary (Part {idx + 1})" if len(summary_chunks) > 1 else "Total Kudos Summary"
-            embed.add_field(name=field_name, value=chunk, inline=False)
-    else:
-        embed.add_field(name="Total Kudos Summary", value=total_kudos_summary, inline=False)
+    # Send each embed separately
+    for embed in embeds:
+        await ctx.respond(embed=embed, ephemeral=True)
 
-    await ctx.respond(embed=embed, ephemeral=True)
     conn.close()
+
 
 # Command to check remaining kudos allocations for the user
 @bot.slash_command(name="my_allocations", description="View your remaining kudos allocations")
